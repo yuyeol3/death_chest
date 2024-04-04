@@ -25,7 +25,11 @@ function equipItemMove(chestInventory, playerEquip, equipPos, idx) {
 
 
 /**
- * 플레이어가 죽고 나서의 동작을 지정
+ * 플레이어 아이템 핸들링
+ * 1. 상자생성
+ * 1. 아이템 복사 및 상자에 추가
+ * 1. xp_orb 생성
+ * 1. 플레이어 인벤토리, 아이템 초기화 
  * @param {EntityDieAfterEvent} event 
  */
 function handleDeadPlayerItem(event) {
@@ -48,8 +52,6 @@ function handleDeadPlayerItem(event) {
         z : playerLocation.z
     });
 
-
-    // world.sendMessage(targetChest.getComponent("destructible_by_explosion").typeId);
 
     /** @type {BlockInventoryComponent}*/
     const inventoryComponent = targetChest.getComponent("inventory");
