@@ -5,7 +5,9 @@ import {
     EntityDieAfterEvent,
     BlockInventoryComponent,
     EntityEquippableComponent,
+    ItemStack
 } from "@minecraft/server";
+
 
 /**
  * 
@@ -23,6 +25,74 @@ function equipItemMove(chestInventory, playerEquip, equipPos, idx) {
 
 }
 
+/**
+ * 
+ * @param {import("@minecraft/server").Vector3} playerLocation 
+ * @param {string} playerDimension 
+ */
+function checkYLim(playerLocation, playerDimension) {
+    if (playerDimension === "minecraft:overworld" && playerLocation.y < -64) {
+        return -64;
+    }
+    
+    
+    if (playerDimension !== "minecraft:overworld" && playerLocation.y < 0) {
+        return 0;
+    }
+
+    return playerLocation.y;
+
+}
+
+
+/**
+ * 
+ * @param {import("@minecraft/server").Vector3} playerLocation 
+ * @param {string} playerDimension 
+ * @returns {import("@minecraft/server").Block | undefined}
+ */
+function createChest(playerLocation, playerDimension) {
+
+    world.getDimension(playerDimension).runCommand(
+        `/setblock ${playerLocation.x} ${playerLocation.y + 1} ${playerLocation.z} chest replace`
+    );
+
+
+    let targetChest = world.getDimension(playerDimension).getBlock({
+        x : playerLocation.x,
+        y : playerLocation.y + 1,
+        z : playerLocation.z
+    });
+
+    let nearBlocks = [ targetChest.east(), targetChest.west(), targetChest.south(), targetChest.north() ];
+
+    let replaced = false;
+    for (const block of nearBlocks) {
+
+        if (block.isAir) {
+            world.getDimension(playerDimension).runCommand(
+                `/setblock ${block.x} ${block.y} ${block.z} chest replace`
+            );
+            replaced = !replaced;
+            break;
+        }
+    }
+
+
+    if (replaced === false) {
+        world.getDimension(playerDimension).runCommand(
+            `/setblock ${playerLocation.x + 1} ${playerLocation.y + 1} ${playerLocation.z} chest replace`
+        );
+    }
+
+
+
+    return targetChest;
+
+}
+
+
+
 
 /**
  * 플레이어 아이템 핸들링
@@ -33,34 +103,28 @@ function equipItemMove(chestInventory, playerEquip, equipPos, idx) {
  * @param {EntityDieAfterEvent} event 
  */
 function handleDeadPlayerItem(event) {
+
     const playerDimension = event.deadEntity.dimension.id;  
     const playerLocation = event.deadEntity.location;
+
 
     /** @type {EntityInventoryComponent}*/
     const playerInventory = event.deadEntity.getComponent("minecraft:inventory");
 
-    world.getDimension(playerDimension).runCommand(
-        `/setblock ${playerLocation.x} ${playerLocation.y + 1} ${playerLocation.z} chest replace`
-    );
-    world.getDimension(playerDimension).runCommand(
-        `/setblock ${playerLocation.x + 1} ${playerLocation.y + 1} ${playerLocation.z} chest replace`
-    );
-
-    const targetChest = world.getDimension(playerDimension).getBlock({
-        x : playerLocation.x,
-        y : playerLocation.y + 1,
-        z : playerLocation.z
-    });
+    playerLocation.y = checkYLim(playerLocation, playerDimension);
+    const targetChest = createChest(playerLocation, playerDimension);
 
 
     /** @type {BlockInventoryComponent}*/
     const inventoryComponent = targetChest.getComponent("inventory");
     for (let i = 0; i < playerInventory.container.size; ++i) {
 
-        if (playerInventory.container.getItem(i) !== undefined)
-        inventoryComponent.container.setItem(i, 
-            playerInventory.container.getItem(i).clone()
-        );
+        if (playerInventory.container.getItem(i) !== undefined) {
+            inventoryComponent.container.setItem(i, 
+                playerInventory.container.getItem(i).clone()
+            );
+        }
+
     }
 
 
@@ -81,7 +145,9 @@ function handleDeadPlayerItem(event) {
 
     event.deadEntity.sendMessage(
         `Dead Location: ${parseInt(playerLocation.x)} ${parseInt(playerLocation.y)} ${parseInt(playerLocation.z)} (${playerDimension})`
-    );   
+    ); 
+
+
 }
 
 /**
