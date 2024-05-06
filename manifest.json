@@ -4,7 +4,7 @@
       "description": "",
       "name": "Death Chest",
       "uuid":"19d70724-6a99-424e-94ee-811259fd13cd",
-      "version": [1, 0, 1],
+      "version": [1, 0, 2],
       "min_engine_version": [1, 16, 0]
     },
     "modules":
