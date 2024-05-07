@@ -102,6 +102,17 @@ function createChest(playerLocation, playerDimension) {
  * @param {string} playerDimension
  */
 function handleDeadPlayerItem(event, playerLocation, playerDimension) {
+    
+    // 폭발 때문에 죽은 경우 -> 남은 폭발 때문에 생성된 상자가 터지지 않도록 처리
+    if (event.damageSource.cause === "entityExplosion") {
+        world.getDimension(playerDimension).runCommand(`/gamerule mobgriefing false`);
+        world.getDimension(playerDimension).runCommand(`/gamerule tntexplodes false`);
+    
+        system.runTimeout(()=>{
+            world.getDimension(playerDimension).runCommand(`/gamerule mobgriefing true`);
+            world.getDimension(playerDimension).runCommand(`/gamerule tntexplodes true`);
+        }, 30);
+    }
 
     /** @type {EntityInventoryComponent}*/
     const playerInventory = event.deadEntity.getComponent("minecraft:inventory");
@@ -141,6 +152,7 @@ function handleDeadPlayerItem(event, playerLocation, playerDimension) {
     ); 
 
 
+
 }
 
 /**
@@ -158,13 +170,9 @@ export function startAfterPlayerDeath(event) {
     const playerDimension = event.deadEntity.dimension.id;
     const playerLocation = { ...event.deadEntity.location };
     playerLocation.y = checkYLim(playerLocation, playerDimension);
-    system.runTimeout(()=>{ 
-        
+
+    system.runTimeout(()=>{
         try {handleDeadPlayerItem(event, playerLocation, playerDimension)} 
         catch (err) { world.sendMessage(`[death_chest.Error] ${err.toString()}`) }
-    
-    }, 25);
-
-
-
+    }, 20);
 }
