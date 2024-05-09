@@ -5,7 +5,7 @@ import {
     EntityDieAfterEvent,
     BlockInventoryComponent,
     EntityEquippableComponent,
-    ItemStack
+    ItemStack,
 } from "@minecraft/server";
 
 /**
@@ -21,6 +21,23 @@ function equipItemMove(chestInventory, playerEquip, equipPos, idx) {
         playerEquip.setEquipment(equipPos, undefined);
     }
 }
+
+/**
+ * 
+ * @param {ItemStack} targetItem 
+ */
+function chkVanishEnchant(targetItem) {
+    /** @type {ItemEnchantableComponent} */
+    const enchantment = targetItem.getComponent("minecraft:enchantable");
+
+    if (enchantment) {
+        world.sendMessage("inside if");
+        return enchantment.getEnchantment("vanishing") !== undefined;
+    }
+
+    return undefined;
+}
+
 
 /**
  * 
@@ -123,7 +140,7 @@ function handleDeadPlayerItem(event, playerLocation, playerDimension) {
     const inventoryComponent = targetChest.getComponent("inventory");
     for (let i = 0; i < playerInventory.container.size; ++i) {
 
-        if (playerInventory.container.getItem(i) !== undefined) {
+        if (playerInventory.container.getItem(i) !== undefined && chkVanishEnchant(playerInventory.container.getItem(i)) !== true) {
             inventoryComponent.container.setItem(i, 
                 playerInventory.container.getItem(i).clone()
             );
