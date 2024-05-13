@@ -66,12 +66,6 @@ function checkYLim(playerLocation, playerDimension) {
  * @returns {import("@minecraft/server").Block | undefined}
  */
 function createChest(playerLocation, playerDimension) {
-
-    world.getDimension(playerDimension).runCommand(
-        `/setblock ${playerLocation.x} ${playerLocation.y + 1} ${playerLocation.z} chest replace`
-    );
-
-
     let targetChest = world.getDimension(playerDimension).getBlock({
         x : playerLocation.x,
         y : playerLocation.y + 1,
@@ -81,25 +75,42 @@ function createChest(playerLocation, playerDimension) {
     let nearBlocks = [ targetChest?.east(), targetChest?.west(), targetChest?.south(), targetChest?.north() ];
 
     let replaced = false;
+    let direction = 0;
     for (const block of nearBlocks) {
 
-        if (block === undefined || block.isAir) {
-            world.getDimension(playerDimension).runCommand(
-                `/setblock ${block.x} ${block.y} ${block.z} chest replace`
-            );
-            replaced = !replaced;
+        if (block.isAir) {
+            if (direction < 2) {
+                world.getDimension(playerDimension).runCommand(
+                    `setblock ${playerLocation.x} ${playerLocation.y + 1} ${playerLocation.z} chest ["minecraft:cardinal_direction" : "south"] replace`
+                );
+                world.getDimension(playerDimension).runCommand(
+                    `setblock ${block.x} ${block.y} ${block.z} chest ["minecraft:cardinal_direction" : "south"] replace`
+                );
+            
+            } else {
+                world.getDimension(playerDimension).runCommand(
+                    `setblock ${playerLocation.x} ${playerLocation.y + 1} ${playerLocation.z} chest ["minecraft:cardinal_direction" : "east"] replace`
+                );
+                world.getDimension(playerDimension).runCommand(
+                    `setblock ${block.x} ${block.y} ${block.z} chest ["minecraft:cardinal_direction" : "east"] replace`
+                );
+            }   
+            replaced = true;
             break;
         }
+        direction++;
     }
 
 
     if (replaced === false) {
         world.getDimension(playerDimension).runCommand(
+            `/setblock ${playerLocation.x} ${playerLocation.y + 1} ${playerLocation.z} chest replace`
+        );
+
+        world.getDimension(playerDimension).runCommand(
             `/setblock ${playerLocation.x + 1} ${playerLocation.y + 1} ${playerLocation.z} chest replace`
         );
     }
-
-
 
     return targetChest;
 
@@ -122,12 +133,12 @@ function handleDeadPlayerItem(event, playerLocation, playerDimension) {
     
     // 폭발 때문에 죽은 경우 -> 남은 폭발 때문에 생성된 상자가 터지지 않도록 처리
     if (event.damageSource.cause === "entityExplosion") {
-        world.getDimension(playerDimension).runCommand(`/gamerule mobgriefing false`);
-        world.getDimension(playerDimension).runCommand(`/gamerule tntexplodes false`);
+        world.getDimension(playerDimension).runCommand(`gamerule mobgriefing false`);
+        world.getDimension(playerDimension).runCommand(`gamerule tntexplodes false`);
     
         system.runTimeout(()=>{
-            world.getDimension(playerDimension).runCommand(`/gamerule mobgriefing true`);
-            world.getDimension(playerDimension).runCommand(`/gamerule tntexplodes true`);
+            world.getDimension(playerDimension).runCommand(`gamerule mobgriefing true`);
+            world.getDimension(playerDimension).runCommand(`gamerule tntexplodes true`);
         }, 30);
     }
 
