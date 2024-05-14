@@ -8,7 +8,7 @@ import {
 } from "@minecraft/server";
 
 /**
- * 
+ * 플레이어의 장비를 상자로 이동시키는 함수
  * @param {BlockInventoryComponent} chestInventory 
  * @param {EntityInventoryComponent} playerEquip 
  * @param {string} equipPos 
@@ -24,7 +24,7 @@ function equipItemMove(chestInventory, playerEquip, equipPos, idx) {
 
 
 /**
- * 
+ * 플레이어의 위치와 차원에 따라 Y 축 제한을 확인하는 함수
  * @param {import("@minecraft/server").Vector3} playerLocation 
  * @param {string} playerDimension 
  */
@@ -44,12 +44,26 @@ function checkYLim(playerLocation, playerDimension) {
 
 
 /**
- * 
+ * 상자를 생성하는 함수
  * @param {import("@minecraft/server").Vector3} playerLocation 
  * @param {string} playerDimension 
  * @returns {import("@minecraft/server").Block | undefined}
  */
 function createChest(playerLocation, playerDimension) {
+    
+    const createChestCommand = (dimension, x, y, z, direction=undefined) => {
+        if (direction === undefined) {
+            world.getDimension(dimension).runCommand(
+                `setblock ${x} ${y} ${z} chest replace`
+            );   
+        }
+        else {
+            world.getDimension(dimension).runCommand(
+                `setblock ${x} ${y} ${z} chest ["minecraft:cardinal_direction" : "${direction}"] replace`
+            );  
+        }
+    }
+    
     let targetChest = world.getDimension(playerDimension).getBlock({
         x : playerLocation.x,
         y : playerLocation.y + 1,
@@ -57,27 +71,18 @@ function createChest(playerLocation, playerDimension) {
     });
 
     let nearBlocks = [ targetChest?.east(), targetChest?.west(), targetChest?.south(), targetChest?.north() ];
-
     let replaced = false;
     let direction = 0;
     for (const block of nearBlocks) {
 
         if (block.isAir) {
             if (direction < 2) {
-                world.getDimension(playerDimension).runCommand(
-                    `setblock ${playerLocation.x} ${playerLocation.y + 1} ${playerLocation.z} chest ["minecraft:cardinal_direction" : "south"] replace`
-                );
-                world.getDimension(playerDimension).runCommand(
-                    `setblock ${block.x} ${block.y} ${block.z} chest ["minecraft:cardinal_direction" : "south"] replace`
-                );
-            
-            } else {
-                world.getDimension(playerDimension).runCommand(
-                    `setblock ${playerLocation.x} ${playerLocation.y + 1} ${playerLocation.z} chest ["minecraft:cardinal_direction" : "east"] replace`
-                );
-                world.getDimension(playerDimension).runCommand(
-                    `setblock ${block.x} ${block.y} ${block.z} chest ["minecraft:cardinal_direction" : "east"] replace`
-                );
+                createChestCommand(playerDimension, playerLocation.x, playerLocation.y + 1, playerLocation.z , "south");
+                createChestCommand(playerDimension, block.x, block.y, block.z , "south");
+            }
+            else {
+                createChestCommand(playerDimension, playerLocation.x, playerLocation.y + 1, playerLocation.z, "east");
+                createChestCommand(playerDimension, block.x, block.y, block.z , "east");
             }   
             replaced = true;
             break;
@@ -87,17 +92,11 @@ function createChest(playerLocation, playerDimension) {
 
 
     if (replaced === false) {
-        world.getDimension(playerDimension).runCommand(
-            `/setblock ${playerLocation.x} ${playerLocation.y + 1} ${playerLocation.z} chest replace`
-        );
-
-        world.getDimension(playerDimension).runCommand(
-            `/setblock ${playerLocation.x + 1} ${playerLocation.y + 1} ${playerLocation.z} chest replace`
-        );
+        createChestCommand(playerDimension, playerLocation.x, playerLocation.y + 1, playerLocation.z);
+        createChestCommand(playerDimension, playerLocation.x+1, playerLocation.y + 1, playerLocation.z);
     }
 
     return targetChest;
-
 }
 
 
