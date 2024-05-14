@@ -1,13 +1,6 @@
-import {
-    world,
-    system,
-    EntityInventoryComponent,
-    EntityDieAfterEvent,
-    BlockInventoryComponent,
-    EntityEquippableComponent,
-    ItemStack
-} from "@minecraft/server";
+import { world } from "@minecraft/server";
 import { startAfterPlayerDeath } from "./deadPlayerItemHandler"
+
 
 
 world.afterEvents.entityDie.subscribe( startAfterPlayerDeath );
