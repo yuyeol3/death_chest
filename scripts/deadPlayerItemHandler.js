@@ -66,15 +66,12 @@ function checkYLim(playerLocation, playerDimension) {
  * @returns {import("@minecraft/server").Block | undefined}
  */
 function createChest(playerLocation, playerDimension) {
-<<<<<<< HEAD
-=======
 
     world.getDimension(playerDimension).runCommand(
         `/setblock ${playerLocation.x} ${playerLocation.y + 1} ${playerLocation.z} chest replace`
     );
 
 
->>>>>>> parent of be92298 (bug fixed)
     let targetChest = world.getDimension(playerDimension).getBlock({
         x : playerLocation.x,
         y : playerLocation.y + 1,
